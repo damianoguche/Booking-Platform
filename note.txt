@@ -1,0 +1,84 @@
+Client (Web / Mobile)
+        |
+        v
+API Gateway (Express)
+        |
+------------------------------------------------
+| Booking | Availability | Payment | Guest |
+------------------------------------------------
+        |
+     Database
+   (PostgreSQL)
+        |
+ External Services
+ (Payment Gateway, Email, SMS)
+
+
+booking-platform/
+│
+├── src/
+│   ├── app.js
+│   ├── server.js
+│
+│   ├── config/
+│   │   ├── db.js
+│   │   └── payment.js
+│
+│   ├── modules/
+|   |   |── user/
+│   │   │   ├── user.controller.js
+│   │   │   ├── user.service.js
+│   │   │   └── user.routes.js
+│   │   ├── availability/
+│   │   │   ├── availability.controller.js
+│   │   │   ├── availability.service.js
+│   │   │   └── availability.routes.js
+│   │
+│   │   ├── booking/
+│   │   │   ├── booking.controller.js
+│   │   │   ├── booking.service.js
+│   │   │   └── booking.routes.js
+│   │
+│   │   ├── payment/
+│   │   │   ├── payment.controller.js
+│   │   │   ├── payment.service.js
+│   │   │   └── payment.routes.js
+│   │
+│   │   └── guest/
+│   │       ├── guest.controller.js
+│   │       ├── guest.service.js
+│   │       └── guest.routes.js
+│
+│   ├── middlewares/
+│   │   ├── auth.js
+│   │   └── error.js
+│
+│   └── utils/
+│       └── response.js
+│
+├── prisma/
+│   └── schema.prisma
+│
+├── package.json
+└── .env
+
+npx prisma init
+
+Initialized Prisma in your project
+
+  prisma/
+    schema.prisma
+  prisma.config.ts
+  .gitignore
+
+User
+ ├── Guest role
+ │    └── Booking, Payments, Reviews
+ │
+ └── Host role
+      └── Properties, Availability, Pricing, Earnings
+
+Best Practice (Airbnb-style)
+- Single user account
+- Multiple roles per user
+- Feature access based on role

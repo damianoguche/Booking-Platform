@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Property {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  price       Float
+  hostId      String
+  createdAt   DateTime  @default(now())
+
+  host     User      @relation(fields: [hostId], references: [id])
+  bookings Booking[]
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("guest")
+  created_at DateTime @default(now())
+
+  bookings  Booking[]
+  properties Property[]
+}
+
+model Booking {
+  id         String   @id @default(uuid())
+  propertyId String
+  userId     String
+  startDate  DateTime
+  endDate    DateTime
+  status     String
+  payment    Payment?
+
+  user     User     @relation(fields: [userId], references: [id])
+  property Property @relation(fields: [propertyId], references: [id])
+}
+
+
+model Payment {
+  id        String   @id @default(uuid())
+  bookingId String   @unique
+  amount    Float
+  status    String
+  provider  String
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+}

@@ -1,0 +1,31 @@
+{
+  "name": "booking_platform_api",
+  "version": "1.0.0",
+  "description": "Bookings, Payments, Availability & Guest Experience API",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "^7.3.0",
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "rotating-file-stream": "^3.2.7",
+    "stripe": "^20.3.0"
+  },
+  "devDependencies": {
+    "@prisma/adapter-pg": "^7.3.0",
+    "nodemon": "^3.1.11",
+    "pg": "^8.18.0",
+    "prisma": "^7.3.0",
+    "strip": "^3.0.0"
+  }
+}
