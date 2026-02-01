@@ -10,4 +10,9 @@ router.get("/bookings", ctrl.bookings);
 router.get("/payments", ctrl.payments);
 router.get("/activity", ctrl.activity);
 
+router.patch("/users/:id/suspend", ctrl.suspendUser);
+router.patch("/bookings/:id/cancel", ctrl.cancelBooking);
+router.patch("/payments/:id/adjust", ctrl.adjustPayment);
+router.patch("/properties/:id/suspend", ctrl.suspendProperty);
+
 module.exports = router;
