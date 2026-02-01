@@ -82,3 +82,6 @@ Best Practice (Airbnb-style)
 - Single user account
 - Multiple roles per user
 - Feature access based on role
+
+Redis locking for double bookings
+Webhooks for payment confirmation
