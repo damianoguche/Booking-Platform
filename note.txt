@@ -19,21 +19,34 @@ booking-platform/
 ├── src/
 │   ├── app.js
 │   ├── server.js
-│
+│   |
 │   ├── config/
 │   │   ├── db.js
 │   │   └── payment.js
 │
 │   ├── modules/
+|   |   |
+│   |   ├── admin/
+│   │   |   ├── admin.controller.js
+│   │   |   ├── admin.service.js
+│   │   |   ├── admin.routes.js
+│   │   |   └── admin.metrics.js
+|   |   |
+│   |   ├── reports/
+│   │   |   ├── report.controller.js
+│   │   |   ├── report.service.js
+│   │   |   └── report.routes.js
+|   |   |
 |   |   |── user/
 │   │   │   ├── user.controller.js
 │   │   │   ├── user.service.js
 │   │   │   └── user.routes.js
+|   |   | 
 │   │   ├── availability/
 │   │   │   ├── availability.controller.js
 │   │   │   ├── availability.service.js
 │   │   │   └── availability.routes.js
-│   │
+│   │   |
 │   │   ├── booking/
 │   │   │   ├── booking.controller.js
 │   │   │   ├── booking.service.js
@@ -43,7 +56,7 @@ booking-platform/
 │   │   │   ├── payment.controller.js
 │   │   │   ├── payment.service.js
 │   │   │   └── payment.routes.js
-│   │
+│   │   |
 │   │   └── guest/
 │   │       ├── guest.controller.js
 │   │       ├── guest.service.js
@@ -54,11 +67,15 @@ booking-platform/
 │   │   └── error.js
 │
 │   └── utils/
-│       └── response.js
-│
+│   |    └── response.js
+|   |
+|   ├── sockets/
+│   |   └── metrics.socket.js
 ├── prisma/
 │   └── schema.prisma
-│
+|   |
+│   ├── prisma/
+│   |   └── schema.prisma
 ├── package.json
 └── .env
 
@@ -85,9 +102,6 @@ Best Practice (Airbnb-style)
 
 Redis locking for double bookings
 Webhooks for payment confirmation
-Export reports (CSV / Excel)
-Real-time metrics (WebSockets)
-
 
 The correct flow (conceptually)
 - Create booking → status = PENDING
@@ -96,7 +110,6 @@ The correct flow (conceptually)
 - Send notification
 
 Write operations are existence checks
-
 update() → must exist
 delete() → must exist
 updateMany() → may not exist (returns count)
