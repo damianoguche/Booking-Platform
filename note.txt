@@ -114,3 +114,73 @@ update() → must exist
 delete() → must exist
 updateMany() → may not exist (returns count)
 findUnique() → read-only
+
+Make Socket.IO available globally
+app.set("io", io);
+
+What this does:
+Stores io inside the Express app instance
+Later, anywhere you have access to req:
+
+const io = req.app.get("io");
+io.emit("event", payload);
+
+Why this is powerful:
+- You can now emit socket events from:
+
+. REST controllers
+. Services
+. Background jobs
+
+Example:
+exports.createOrder = (req, res) => {
+  const io = req.app.get("io");
+  io.emit("order_created", { id: 123 });
+  res.json({ success: true });
+};
+
+This bridges HTTP APIs and real-time events
+
+Start listening for connections
+
+server.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
+});
+
+What this does:
+- Opens a TCP port
+- Starts accepting:
+   . HTTP requests (Express)
+   . WebSocket connections (Socket.IO)
+
+At this point your app can:
+ - Serve REST APIs
+ - Handle WebSocket events
+ - Emit real-time updates
+
+Client (Browser / Mobile)
+        |
+        |  HTTP / WebSocket
+        v
++-------------------------+
+|   Node.js HTTP Server   |
+|-------------------------|
+|  Express   | Socket.IO  |
+|  (REST)    | (Realtime)|
++-------------------------+
+. Express → request/response
+. Socket.IO → events & streams
+. Same port, same 
+
+Event timeline:
+Request → Controller → Service → DB commit
+                                ↓
+                       Push metrics (Socket.IO)
+                                ↓
+                        HTTP Response
+
+Proper implementation of admin.metrics
+What NOT to do:
+ - Don’t access DB directly from controller
+ - Don’t create socket logic in controller
+ - Don’t recompute metrics on every socket connection                        

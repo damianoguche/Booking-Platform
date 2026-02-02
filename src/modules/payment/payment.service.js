@@ -1,4 +1,5 @@
 const prisma = require("../../config/db");
+const metrics = require("../admin/admin.metrics");
 const notificationService = require("../notification/notification.service");
 
 exports.processPayment = async (bookingId, amount) => {
@@ -19,6 +20,8 @@ exports.processPayment = async (bookingId, amount) => {
       user: true
     }
   });
+
+  await metrics.pushMetrics(req.app.get("io"));
 
   await notificationService.sendNotification({
     userId: booking.userId,
