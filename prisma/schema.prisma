@@ -51,6 +51,8 @@ model Payment {
   amount    Float
   status    String
   provider  String
+  confirmed_at DateTime?
+  created_at  DateTime @default(now())
 
   booking Booking @relation(fields: [bookingId], references: [id])
 }

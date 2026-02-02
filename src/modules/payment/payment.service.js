@@ -21,8 +21,6 @@ exports.processPayment = async (bookingId, amount) => {
     }
   });
 
-  await metrics.pushMetrics(req.app.get("io"));
-
   await notificationService.sendNotification({
     userId: booking.userId,
     type: "Booking Confirmed",

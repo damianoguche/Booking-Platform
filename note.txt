@@ -100,8 +100,10 @@ Best Practice (Airbnb-style)
 - Multiple roles per user
 - Feature access based on role
 
+### Features
 Redis locking for double bookings
-Webhooks for payment confirmation
+Admin analytics (charts, trends)
+Data warehouse integration
 
 The correct flow (conceptually)
 - Create booking → status = PENDING
@@ -141,7 +143,7 @@ exports.createOrder = (req, res) => {
 
 This bridges HTTP APIs and real-time events
 
-Start listening for connections
+Start listening for connections:
 
 server.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);

@@ -1,5 +1,6 @@
 const express = require("express");
 const errorHandler = require("./middlewares/error");
+const rawBody = require("./middlewares/rawBody");
 
 const bookingRoutes = require("./modules/booking/booking.routes");
 const availabilityRoutes = require("./modules/availability/availability.routes");
@@ -11,7 +12,9 @@ const adminRoutes = require("./modules/admin/admin.routes");
 const notificationRoutes = require("./modules/notification/notification.routes");
 
 const app = express();
-app.use(express.json());
+
+// Without this → signature verification WILL FAIL
+app.use(express.json({ verify: rawBody }));
 
 app.use("/api/properties", propertyRoutes);
 app.use("/api/bookings", bookingRoutes);
