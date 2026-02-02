@@ -8,6 +8,7 @@ const guestRoutes = require("./modules/guest/guest.routes");
 const userRoutes = require("./modules/user/user.routes");
 const propertyRoutes = require("./modules/property/property.routes");
 const adminRoutes = require("./modules/admin/admin.routes");
+const notificationRoutes = require("./modules/notification/notification.routes");
 
 const app = express();
 app.use(express.json());
@@ -19,6 +20,7 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/guest", guestRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 app.use(errorHandler);
 

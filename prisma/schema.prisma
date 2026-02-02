@@ -12,7 +12,7 @@ model Property {
   description String?
   price       Float
   hostId      String
-  createdAt   DateTime  @default(now())
+  created_at   DateTime  @default(now())
 
   host     User      @relation(fields: [hostId], references: [id])
   bookings Booking[]
@@ -26,6 +26,7 @@ model User {
   role      String   @default("guest")
   created_at DateTime @default(now())
 
+  notifications Notification[]
   bookings  Booking[]
   properties Property[]
 }
@@ -53,3 +54,14 @@ model Payment {
 
   booking Booking @relation(fields: [bookingId], references: [id])
 }
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String
+  message   String
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+

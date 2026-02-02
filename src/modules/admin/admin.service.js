@@ -1,4 +1,5 @@
 const prisma = require("../../config/db");
+const notificationService = require("../notification/notification.service");
 
 exports.getKpis = async () => {
   const [
@@ -66,25 +67,79 @@ exports.recentActivity = async () => {
 };
 
 // Suspend a user (guest or host)
-exports.suspendUser = async (userId) => {
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user) throw new Error("User not found");
+// exports.suspendUser = async (userId) => {
+//   const user = await prisma.user.findUnique({ where: { id: userId } });
+//   if (!user) throw new Error("User not found");
 
-  return prisma.user.update({
-    where: { id: userId },
-    data: { role: "suspended" } // soft-block the account
+//   return prisma.user.update({
+//     where: { id: userId },
+//     data: { role: "suspended" } // soft-block the account
+//   });
+// };
+
+exports.suspendUser = async (userId) => {
+  return prisma.$transaction(async (tx) => {
+    // Suspend user (soft block)
+    const suspendedUser = await tx.user.update({
+      where: { id: userId },
+      data: {
+        role: "suspended"
+      }
+    });
+
+    // Send notification AFTER successful update
+    await notificationService.sendNotification({
+      userId: suspendedUser.id,
+      type: "ACCOUNT_SUSPENDED",
+      message:
+        "Your account has been suspended by an admin due to policy violation."
+    });
+
+    return suspendedUser;
   });
 };
 
 // Force-cancel a booking
-exports.cancelBooking = async (bookingId) => {
-  const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
-  if (!booking) throw new Error("Booking not found");
+// exports.cancelBooking = async (bookingId) => {
+//   const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+//   if (!booking) throw new Error("Booking not found");
 
-  return prisma.booking.update({
-    where: { id: bookingId },
-    data: { status: "CANCELLED" }
+//   return prisma.booking.update({
+//     where: { id: bookingId },
+//     data: { status: "CANCELLED" }
+//   });
+// };
+
+exports.cancelBooking = async (bookingId) => {
+  // Atomically update booking
+  const result = await prisma.$transaction(async (tx) => {
+    const booking = await tx.booking.findUnique({
+      where: { id: bookingId },
+      include: { property: true }
+    });
+
+    if (!booking) throw new Error("Booking not found");
+
+    if (booking.status === "CANCELLED") {
+      throw new Error("Booking already cancelled");
+    }
+
+    const updatedBooking = await tx.booking.update({
+      where: { id: bookingId },
+      data: { status: "CANCELLED" }
+    });
+
+    return updatedBooking;
   });
+
+  // Side-effect AFTER transaction commits
+  await notificationService.sendNotification({
+    userId: result.userId,
+    type: "Booking Cancelled",
+    message: `Your booking for ${result.property.name} has been cancelled by admin.`
+  });
+
+  return result;
 };
 
 // Adjust a payment

@@ -85,3 +85,19 @@ Best Practice (Airbnb-style)
 
 Redis locking for double bookings
 Webhooks for payment confirmation
+Export reports (CSV / Excel)
+Real-time metrics (WebSockets)
+
+
+The correct flow (conceptually)
+- Create booking → status = PENDING
+- Process payment
+- Confirm booking → status = CONFIRMED
+- Send notification
+
+Write operations are existence checks
+
+update() → must exist
+delete() → must exist
+updateMany() → may not exist (returns count)
+findUnique() → read-only
