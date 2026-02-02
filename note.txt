@@ -74,8 +74,8 @@ booking-platform/
 ├── prisma/
 │   └── schema.prisma
 |   |
-│   ├── prisma/
-│   |   └── schema.prisma
+│   ├── sockets/
+│   |   └── metrics.socket.js
 ├── package.json
 └── .env
 

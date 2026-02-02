@@ -21,6 +21,7 @@ app.use("/api/guest", guestRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/reports", require("./modules/reports/report.routes"));
 
 app.use(errorHandler);
 

@@ -17,10 +17,13 @@
     "axios": "^1.13.4",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.2.3",
+    "exceljs": "^4.4.0",
     "express": "^5.2.1",
+    "json2csv": "^6.0.0-alpha.2",
     "jsonwebtoken": "^9.0.3",
     "nodemailer": "^7.0.13",
     "rotating-file-stream": "^3.2.7",
+    "socket.io": "^4.8.3",
     "stripe": "^20.3.0"
   },
   "devDependencies": {
