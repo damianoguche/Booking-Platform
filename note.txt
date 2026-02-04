@@ -185,4 +185,24 @@ Proper implementation of admin.metrics
 What NOT to do:
  - Don’t access DB directly from controller
  - Don’t create socket logic in controller
- - Don’t recompute metrics on every socket connection                        
+ - Don’t recompute metrics on every socket connection    
+
+
+The Golden Rule for Stripe Webhooks
+- Stripe webhook routes must NOT pass through express.json() or 
+bodyParser.json()
+- They must receive the raw body only.  
+
+
+Your event is logged multiple times because:
+- Stripe guarantees delivery by resending
+- Stripe deliberately sends the same event multiple times until it 
+is 100% sure your server received it.
+
+Stripe Also Sends Multiple Related Events
+- One payment can generate many events:
+  - payment_intent.created
+  - payment_intent.processing
+  - payment_intent.succeeded
+  - charge.succeeded
+  - checkout.session.completed
