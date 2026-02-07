@@ -7,69 +7,131 @@ datasource db {
 }
 
 model WebhookEvent {
-  id        String   @id
-  provider  String
+  id         String   @id
+  provider   String
   created_at DateTime @default(now())
 }
 
 model Property {
-  id          String    @id @default(uuid())
+  id          String         @id @default(uuid())
   name        String
   description String?
-  price       Float
+  basePrice   Float
   hostId      String
-  created_at   DateTime  @default(now())
+  status      PropertyStatus @default(DRAFT)
+  city        String
+  country     String
+  address     String?
 
-  host     User      @relation(fields: [hostId], references: [id])
-  bookings Booking[]
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  host         User           @relation(fields: [hostId], references: [id])
+  bookings     Booking[]
+  availability Availability[]
 }
 
 model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String
-  role      String   @default("guest")
+  id         String   @id @default(uuid())
+  name       String
+  email      String   @unique
+  password   String
+  role       String   @default("guest")
   created_at DateTime @default(now())
 
   notifications Notification[]
-  bookings  Booking[]
-  properties Property[]
+  bookings      Booking[]
+  properties    Property[]
 }
 
 model Booking {
-  id         String   @id @default(uuid())
+  id         String @id @default(uuid())
   propertyId String
   userId     String
-  startDate  DateTime
-  endDate    DateTime
-  status     String
+
+  startDate DateTime
+  endDate   DateTime
+
+  status     BookingStatus
+  created_at DateTime      @default(now())
+  expires_at DateTime? // for PENDING timeout
   payment    Payment?
 
   user     User     @relation(fields: [userId], references: [id])
   property Property @relation(fields: [propertyId], references: [id])
+
+  availability Availability[]
 }
 
-
 model Payment {
-  id        String   @id @default(uuid())
-  bookingId String   @unique
-  amount    Float
-  status    String
-  provider  String
+  id           String    @id @default(uuid())
+  bookingId    String    @unique
+  reference    String   @unique
+  amount       Float
+  currency     String
+  status       PaymentStatus
+  provider     String
   confirmed_at DateTime?
-  created_at  DateTime @default(now())
+  created_at   DateTime  @default(now())
 
   booking Booking @relation(fields: [bookingId], references: [id])
 }
 
 model Notification {
-  id        String   @id @default(uuid())
-  userId    String
-  type      String
-  message   String
+  id         String   @id @default(uuid())
+  userId     String
+  type       String
+  message    String
   created_at DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id])
 }
 
+model Availability {
+  // "On this date, for this property, what is the status?"
+  id         String             @id @default(uuid())
+  propertyId String
+  date       DateTime
+  status     AvailabilityStatus
+  bookingId  String?
+
+  booking  Booking? @relation(fields: [bookingId], references: [id])
+  property Property @relation(fields: [propertyId], references: [id])
+
+  @@unique([propertyId, date]) // Prevent duplicates rows at DB level
+  @@index([propertyId, date])
+}
+
+enum AvailabilityStatus {
+  AVAILABLE
+  BOOKED
+  BLOCKED
+}
+
+enum PropertyStatus {
+  DRAFT
+  PUBLISHED
+  SUSPENDED
+  ACTIVE
+  INACTIVE
+  MAINTENANCE
+}
+
+enum Role {
+  GUEST
+  HOST
+  ADMIN
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  EXPIRED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
