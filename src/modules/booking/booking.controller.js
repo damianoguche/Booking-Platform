@@ -17,7 +17,10 @@ exports.create = async (req, res, next) => {
       endDate: booking.endDate
     });
 
-    res.json(booking);
+    res.status(201).json({
+      success: true,
+      data: booking
+    });
   } catch (e) {
     next(e);
   }
