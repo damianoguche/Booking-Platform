@@ -129,10 +129,9 @@ io.emit("event", payload);
 
 Why this is powerful:
 - You can now emit socket events from:
-
-. REST controllers
-. Services
-. Background jobs
+    . REST controllers
+    . Services
+    . Background jobs
 
 Example:
 exports.createOrder = (req, res) => {
@@ -172,9 +171,9 @@ Client (Browser / Mobile)
 +-------------------------+
 . Express → request/response
 . Socket.IO → events & streams
-. Same port, same 
+. Same port, same server
 
-Event timeline:
+Event timeline: Correct flow after booking creation
 Request → Controller → Service → DB commit
                                 ↓
                        Push metrics (Socket.IO)
@@ -206,3 +205,222 @@ Stripe Also Sends Multiple Related Events
   - payment_intent.succeeded
   - charge.succeeded
   - checkout.session.completed
+
+
+Guest vs Host — Key Differences
+Guest (Traveler / Booker)
+
+A guest is a user who consumes properties.
+Typical abilities:
+ - Search & view properties
+ - Make bookings
+ - Pay for stays
+ - Leave reviews
+ - Cancel bookings
+ - Message hosts
+
+Data owned
+ . Bookings
+ . Payments
+ . Reviews
+ . Preferences (dates, location, budget)
+
+Guests do not own properties.
+
+Host (Property Owner / Manager)
+A host is a user who provides and manages properties.
+
+Typical abilities:
+ - Add properties
+ - Upload photos
+ - Set pricing & availability
+ - Manage bookings
+ - Approve / reject requests
+ - Communicate with guests
+ - View earnings & payouts
+ - Handle cancellations & disputes
+
+Data owned:
+ - Properties
+ - Availability calendars
+ - Pricing rules
+ - Payout accounts
+ - Booking history for their properties
+👉 Hosts own or manage properties.
+
+Best Practice (Airbnb-style)
+- Single user account
+- Multiple roles per user
+- Feature access based on role
+
+This avoids:
+- Duplicate accounts
+- Messy migrations later
+- Permission nightmares
+
+Best Practice: Even Stronger Atomicity (Database-Level)
+For production booking systems, also add:
+ - Unique Constraint (Postgres)
+
+ CREATE UNIQUE INDEX unique_booking
+ ON availability(property_id, date)
+ WHERE status = 'BOOKED';
+
+This guarantees:
+ - Even if your code fails, DB prevents double-booking.
+ - This is called defensive consistency.
+
+TRANSACTION:
+ A transaction is a group of database operations that are treated as 
+ one unit of work:
+
+ `Check availability
+  Create booking
+  Update calendar`
+
+ATOMIC:
+ Atomic means all or nothing.
+ - Either everything succeeds → changes are saved or anything 
+ fails and everything is rolled back. No partial result is allowed.
+
+Example:
+ - If booking is created but date blocking fails:
+👉 Atomicity ensures both are undone.
+
+Relationship: ACID
+ - In databases, transactions follow ACID:
+ | Letter | Meaning     |
+| ------ | ----------- |
+| A      | Atomicity   |
+| C      | Consistency |
+| I      | Isolation   |
+| D      | Durability  |
+
+
+The field - property Property @relation(...) does not create a column.
+It is a Prisma-level relation helper. It lets you do:
+
+await prisma.availability.findMany({
+  include: {
+    property: true
+  }
+});
+
+So you get:
+
+{
+  id: "...",
+  propertyId: "...",
+  date: "...",
+  status: "AVAILABLE",
+  property: {
+    id: "...",
+    name: "Ocean View"
+  }
+}
+
+Without this field, you’d only get propertyId.
+| Field      | Purpose                               |
+| ---------- | ------------------------------------- |
+| propertyId | Stores the relationship in DB         |
+| property   | Lets Prisma navigate the relationship |
+
+DEFAULT AVAILABILITY AFTER CREATION
+Each day is available by default means:
+ - System auto-creates daily rows
+ - All start as AVAILABLE
+ - Booking flips them to BOOKED
+ - Cancel flips back
+
+
+ Two-Phase Booking (Industry Standard)
+ This is how Airbnb, hotels, airlines work:
+
+ BOOKED (temporary hold)
+→ PENDING booking
+→ CONFIRMED after payment
+
+Later:
+PENDING → CONFIRMED
+or
+PENDING → EXPIRED → AVAILABLE
+
+| Table        | Purpose               |
+| ------------ | --------------------- |
+| Booking      | Reservation record    |
+| Availability | Locked calendar slots |
+
+The Booking service owns:
+| Responsibility  | Table                  |
+| --------------- | ---------------------- |
+| Create booking  | booking                |
+| Cancel booking  | booking + availability |
+| Expire booking  | booking + availability |
+| Confirm booking | booking + availability |
+
+
+Payment Confirmation
+Proper Responsibility Split:
+| Service         | Responsibility         |
+| --------------- | ---------------------- |
+| Booking Service | Owns booking lifecycle |
+| Payment Service | Owns money + gateways  |
+| Admin           | Monitoring / overrides |
+
+Why NOT Only Booking?
+Because Booking cannot know if payment succeeded.
+
+Only:
+- Paystack
+- Stripe
+- Flutterwave
+know that.
+
+Correct Flow (Industry Standard)
+Here is the real-world flow:
+
+User → Create Booking (PENDING, expiresAt)
+↓
+User → Pay
+↓
+Gateway → Webhook → Payment Service
+↓
+Payment Service → Verify → Emit Event
+↓
+Booking Service → CONFIRM
+
+Recommended Architecture:
+
+Client
+   ↓
+Booking Service  ←→  Payment Service
+   ↓                    ↓
+Availability         Payment Gateway
+Booking NEVER talks to gateway directly.
+
+Payment Confirmation Pattern:
+Step 1 — Booking Service Creates Pending Booking
+Step 2 — Client Pays (via Payment Service)
+ - User is redirected to Paystack/Stripe.
+ - Payment Service creates transaction.
+ Step 3 — Gateway Sends Webhook
+  - POST /payments/webhook
+Step 4 — Payment Service Verifies
+const verified = await verifyWithGateway(ref);
+if (!verified) return;
+ - Never trust raw webhook.
+ Step 5 — Payment Service Notifies Booking Service
+ Via:
+ - HTTP
+ - Queue (RabbitMQ/Kafka)
+ - Event Bus
+
+Example HTTP:
+POST /booking/confirm
+{
+  bookingId,
+  transactionId
+}
+
+Step 6 — Booking Confirms
+Your function runs: confirmBooking(bookingId);
