@@ -5,7 +5,7 @@ exports.pushMetrics = async (io) => {
     throw new Error("Socket.IO instance not available");
   }
 
-  const metrics = {
+  const metricsPayload = {
     users: await prisma.user.count(),
     bookings: await prisma.booking.count(),
     properties: await prisma.property.count(),
@@ -14,5 +14,7 @@ exports.pushMetrics = async (io) => {
     })
   };
 
-  io.emit("metrics:update", metrics);
+  io.emit("metrics:update", metricsPayload);
+
+  return metricsPayload;
 };
