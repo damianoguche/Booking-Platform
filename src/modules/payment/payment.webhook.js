@@ -8,7 +8,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2026-01-28.clover"
 });
 
-const verifySignature = (provider, req) => {
+const verifyWebhook = (provider, req) => {
   switch (provider) {
     case "stripe":
       const signature = req.headers["stripe-signature"];
@@ -19,7 +19,7 @@ const verifySignature = (provider, req) => {
       return stripe.webhooks.constructEvent(
         req.body,
         signature,
-        process.env.STRIPE_WEBHOOK_SECRET
+        process.env.WEBHOOK_SECRET
       );
 
     case "paystack":
@@ -100,9 +100,7 @@ exports.handleWebhook = async (req, res) => {
   let event;
 
   try {
-    event = verifySignature("stripe", req);
-
-    console.log(event.type);
+    event = verifyWebhook("stripe", req);
   } catch (err) {
     console.error("Signature verification failed:", err.message);
     return res.status(401).send("Invalid Stripe signature");

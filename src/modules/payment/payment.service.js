@@ -2,12 +2,14 @@ const prisma = require("../../config/db");
 const metrics = require("../admin/admin.metrics");
 const notificationService = require("../notification/notification.service");
 
+// Payment Service (after gateway verification) triggers
+// Payment confirmation
 exports.processPayment = async (bookingId, amount) => {
   const payment = await prisma.payment.create({
     data: {
       bookingId,
       amount,
-      status: "SUCCESS",
+      status: "PENDING",
       provider: "STRIPE"
     }
   });
