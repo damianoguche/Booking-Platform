@@ -1,7 +1,5 @@
 const express = require("express");
 const errorHandler = require("./middlewares/error");
-const rawBody = require("./middlewares/rawBody");
-
 const bookingRoutes = require("./modules/booking/booking.routes");
 const availabilityRoutes = require("./modules/availability/availability.routes");
 const paymentRoutes = require("./modules/payment/payment.routes");
