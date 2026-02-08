@@ -1,5 +1,6 @@
 const cron = require("node-cron");
 const prisma = require("../config/db");
+const service = require("../booking/booking.service");
 
 // Run every minute
 cron.schedule("* * * * *", async () => {
@@ -18,26 +19,27 @@ cron.schedule("* * * * *", async () => {
 
   // Use the below instead of looping
   for (const booking of expired) {
-    await prisma.$transaction(async (tx) => {
-      // Free days
-      await tx.availability.updateMany({
-        where: {
-          bookingId: booking.id
-        },
-        data: {
-          status: "AVAILABLE",
-          bookingId: null
-        }
-      });
+    await service.cancelBooking(booking.id);
+    // await prisma.$transaction(async (tx) => {
+    //   // Free days
+    //   await tx.availability.updateMany({
+    //     where: {
+    //       bookingId: booking.id
+    //     },
+    //     data: {
+    //       status: "AVAILABLE",
+    //       bookingId: null
+    //     }
+    //   });
 
-      // Expire booking
-      await tx.booking.update({
-        where: { id: booking.id },
-        data: {
-          status: "EXPIRED"
-        }
-      });
-    });
+    //   // Expire booking
+    //   await tx.booking.update({
+    //     where: { id: booking.id },
+    //     data: {
+    //       status: "EXPIRED"
+    //     }
+    //   });
+    // });
   }
 });
 

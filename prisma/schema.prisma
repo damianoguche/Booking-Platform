@@ -48,14 +48,12 @@ model Booking {
   id         String @id @default(uuid())
   propertyId String
   userId     String
-
-  startDate DateTime
-  endDate   DateTime
-
+  startDate  DateTime
+  endDate    DateTime
   status     BookingStatus
   created_at DateTime      @default(now())
   expires_at DateTime? // for PENDING timeout
-  payment    Payment?
+  payment    Payment? // booking has one associated payment record.
 
   user     User     @relation(fields: [userId], references: [id])
   property Property @relation(fields: [propertyId], references: [id])
@@ -64,15 +62,16 @@ model Booking {
 }
 
 model Payment {
-  id           String    @id @default(uuid())
-  bookingId    String    @unique
-  reference    String   @unique
-  amount       Float
-  currency     String
-  status       PaymentStatus
-  provider     String
-  confirmed_at DateTime?
-  created_at   DateTime  @default(now())
+  id              String    @id @default(uuid())
+  bookingId       String    @unique
+  reference       String   @unique
+  amount          Float
+  currency        String
+  status          PaymentStatus
+  provider        String
+  confirmed_at    DateTime?
+  created_at      DateTime  @default(now())
+  stripeSessionId String? @unique
 
   booking Booking @relation(fields: [bookingId], references: [id])
 }
@@ -134,4 +133,5 @@ enum PaymentStatus {
   PENDING
   SUCCESS
   FAILED
+  CONFIRM_PENDING
 }

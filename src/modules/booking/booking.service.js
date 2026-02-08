@@ -15,7 +15,7 @@ const expires_at = new Date(Date.now() + EXPIRY_MINUTES * 60 * 1000);
 exports.createBooking = async (data, userId) => {
   return prisma.$transaction(async (tx) => {
     /* ----------------------------------
-       1. Validate Property
+       Validate Property
     ----------------------------------- */
     const property = await tx.property.findUnique({
       where: { id: data.propertyId }
@@ -26,7 +26,7 @@ exports.createBooking = async (data, userId) => {
     }
 
     /* ----------------------------------
-       2. Normalize Dates
+       Normalize Dates
     ----------------------------------- */
     const startDate = new Date(data.startDate);
     const endDate = new Date(data.endDate);
@@ -36,14 +36,14 @@ exports.createBooking = async (data, userId) => {
     }
 
     /* ----------------------------------
-       3. Calculate Number of Days
+       Calculate Number of Days
     ----------------------------------- */
     const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
     const days = Math.ceil((endDate - startDate) / MS_PER_DAY);
 
     /* ----------------------------------
-       4. Lock Days (Atomic Reservation)
+       Lock Days (Atomic Reservation)
     ----------------------------------- */
     const result = await tx.availability.updateMany({
       where: {
@@ -65,7 +65,7 @@ exports.createBooking = async (data, userId) => {
     }
 
     /* ----------------------------------
-       5. Create Booking Record
+       Create Booking Record
     ----------------------------------- */
     const booking = await tx.booking.create({
       data: {
@@ -79,7 +79,7 @@ exports.createBooking = async (data, userId) => {
     });
 
     /* ----------------------------------
-       6. Attach Booking to Days
+       Attach Booking to Days
     ----------------------------------- */
     await tx.availability.updateMany({
       where: {
@@ -97,7 +97,7 @@ exports.createBooking = async (data, userId) => {
     });
 
     /* ----------------------------------
-       7. Return Booking
+       Return Booking
     ----------------------------------- */
     return booking;
   });
@@ -126,34 +126,60 @@ exports.cancelBooking = async (bookingId) => {
   });
 };
 
-exports.confirmBooking = async (bookingId, paymentRef) => {
+exports.confirmBooking = async (bookingId, reference) => {
   return prisma.$transaction(async (tx) => {
     const booking = await tx.booking.findUnique({
       where: { id: bookingId }
     });
 
     if (!booking) {
+      console.error("Invalid bookingId:", bookingId);
       throw new Error("Booking not found");
     }
 
+    // Idempotent
+    if (booking.status === "CONFIRMED") {
+      return booking;
+    }
+
     if (booking.status !== "PENDING") {
-      return booking; // idempotent
+      throw new Error("Invalid state");
     }
 
-    if (booking.expires_at < new Date()) {
-      throw new Error("Booking expired");
+    if (
+      booking.expires_at &&
+      booking.expires_at < new Date() &&
+      booking.status === "PENDING"
+    ) {
+      console.warn("Expired booking confirmed due to payment:", bookingId);
     }
 
-    // Save payment reference
-    await tx.booking.update({
-      where: { id: bookingId },
+    // Check payment exists
+    const payment = await tx.payment.findUnique({
+      where: { reference }
+    });
+
+    if (!payment || payment.bookingId !== bookingId) {
+      throw new Error("Invalid payment reference");
+    }
+
+    // Update payment
+    await tx.payment.update({
+      where: { reference },
       data: {
-        status: "CONFIRMED",
-        expires_at: null,
-        paymentRef
+        status: "SUCCESS"
       }
     });
 
-    return booking;
+    // Update Booking
+    const updated = await tx.booking.update({
+      where: { id: bookingId },
+      data: {
+        status: "CONFIRMED",
+        expires_at: null
+      }
+    });
+
+    return updated;
   });
 };

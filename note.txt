@@ -369,7 +369,6 @@ Proper Responsibility Split:
 
 Why NOT Only Booking?
 Because Booking cannot know if payment succeeded.
-
 Only:
 - Paystack
 - Stripe
@@ -424,3 +423,39 @@ POST /booking/confirm
 
 Step 6 — Booking Confirms
 Your function runs: confirmBooking(bookingId);
+
+1. Reserve dates (lock inventory)
+2. Create booking (PENDING)
+3. Create payment record
+4. Create Stripe session (with IDs)
+5. User pays
+6. Webhook confirms
+7. Booking → CONFIRMED
+
+What Is stripe.checkout.sessions.create()?
+This is the code that:
+
+👉 Creates the payment page on Stripe
+👉 Links payment → booking → your DB
+👉 Stores metadata that comes back in webhook
+Flow:
+
+User clicks "Pay"
+    ↓
+Your API creates Stripe Session 
+    ↓
+Stripe shows checkout page
+    ↓
+User pays
+    ↓
+Stripe sends webhook (with metadata)
+    ↓
+You confirm booking
+
+No session creation = broken flow.
+Which Service Should Create It?
+| Service | Responsibility         |
+| ------- | ---------------------- |
+| Booking | Reserve property       |
+| Payment | Handle Stripe/Paystack |
+| Webhook | Confirm payment        |

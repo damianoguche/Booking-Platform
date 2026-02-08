@@ -4,13 +4,15 @@ const notificationService = require("../notification/notification.service");
 
 // Payment Service (after gateway verification) triggers
 // Payment confirmation
-exports.processPayment = async (bookingId, amount) => {
+exports.processPayment = async (bookingId, amount, reference, provider) => {
   const payment = await prisma.payment.create({
     data: {
       bookingId,
       amount,
+      reference,
+      currency: "NGN",
       status: "PENDING",
-      provider: "STRIPE"
+      provider
     }
   });
 

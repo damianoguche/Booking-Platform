@@ -1,2 +1,5 @@
 C:\Users\DAmian\Documents\Booking_Platform_API\audit\20260203-0832-01-audit.log.gz
 C:\Users\DAmian\Documents\Booking_Platform_API\audit\20260204-0000-01-audit.log.gz
+C:\Users\DAmian\Documents\Booking_Platform_API\audit\20260205-0000-01-audit.log.gz
+C:\Users\DAmian\Documents\Booking_Platform_API\audit\20260207-0000-01-audit.log.gz
+C:\Users\DAmian\Documents\Booking_Platform_API\audit\20260208-0817-01-audit.log.gz
