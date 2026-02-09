@@ -1,8 +1,5 @@
 const prisma = require("../../config/db");
 
-const EXPIRY_MINUTES = 20;
-const expires_at = new Date(Date.now() + EXPIRY_MINUTES * 60 * 1000);
-
 /**
  * Create booking safely (race-condition proof)
  * Pattern:
@@ -14,6 +11,9 @@ const expires_at = new Date(Date.now() + EXPIRY_MINUTES * 60 * 1000);
  */
 exports.createBooking = async (data, userId) => {
   return prisma.$transaction(async (tx) => {
+    const EXPIRY_MINUTES = 20;
+    const expires_at = new Date(Date.now() + EXPIRY_MINUTES * 60 * 1000);
+
     /* ----------------------------------
        Validate Property
     ----------------------------------- */
@@ -126,10 +126,14 @@ exports.cancelBooking = async (bookingId) => {
   });
 };
 
-exports.confirmBooking = async (bookingId, reference) => {
+exports.confirmBooking = async (bookingId) => {
   return prisma.$transaction(async (tx) => {
     const booking = await tx.booking.findUnique({
-      where: { id: bookingId }
+      where: { id: bookingId },
+      include: {
+        user: true,
+        property: true
+      }
     });
 
     if (!booking) {
@@ -146,30 +150,9 @@ exports.confirmBooking = async (bookingId, reference) => {
       throw new Error("Invalid state");
     }
 
-    if (
-      booking.expires_at &&
-      booking.expires_at < new Date() &&
-      booking.status === "PENDING"
-    ) {
-      console.warn("Expired booking confirmed due to payment:", bookingId);
+    if (booking.expires_at && booking.expires_at < new Date()) {
+      throw new Error("Booking expired");
     }
-
-    // Check payment exists
-    const payment = await tx.payment.findUnique({
-      where: { reference }
-    });
-
-    if (!payment || payment.bookingId !== bookingId) {
-      throw new Error("Invalid payment reference");
-    }
-
-    // Update payment
-    await tx.payment.update({
-      where: { reference },
-      data: {
-        status: "SUCCESS"
-      }
-    });
 
     // Update Booking
     const updated = await tx.booking.update({
@@ -177,6 +160,10 @@ exports.confirmBooking = async (bookingId, reference) => {
       data: {
         status: "CONFIRMED",
         expires_at: null
+      },
+      include: {
+        user: true,
+        property: true
       }
     });
 

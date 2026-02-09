@@ -1,0 +1,127 @@
+<!-- <!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Booking Platform</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <h1>Welcome to Booking Platform</h1>
+
+    <button id="socketBtn">Test Socket</button>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html> -->
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Booking Payment</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      /* Main card */
+      .card {
+        background: #9c489e;
+        backdrop-filter: blur(12px);
+        padding: 50px 40px;
+        border-radius: 20px;
+        width: 100%;
+        max-width: 420px;
+        text-align: center;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+        animation: fadeIn 0.8s ease;
+      }
+
+      h1 {
+        font-size: 2.2rem;
+        margin-bottom: 10px;
+        color: #f2e6ff;
+      }
+
+      .subtitle {
+        font-size: 1.1rem;
+        color: #e0d4f7;
+        margin-bottom: 30px;
+      }
+
+      /* Loader */
+      .loader {
+        display: none;
+        margin-top: 15px;
+        font-size: 0.95rem;
+        color: #ffd9ff;
+      }
+
+      /* Animations */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-25px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="card">
+      <h1>Booking Platform</h1>
+      <p class="subtitle">Secure Payment Checkout</p>
+
+      <button id="payBtn" class="pay-btn">Pay</button>
+
+      <div class="loader" id="loader">Redirecting to payment gateway...</div>
+    </div>
+
+    <script>
+      const payBtn = document.getElementById("payBtn");
+      const loader = document.getElementById("loader");
+
+      payBtn.addEventListener("click", async () => {
+        try {
+          payBtn.disabled = true;
+          payBtn.textContent = "Processing...";
+          loader.style.display = "block";
+
+          const response = await fetch(
+            "http://localhost:3000/api/payments/checkout",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                bookingId: "BOOK98765",
+                amount: 2000
+              })
+            }
+          );
+
+          const data = await response.json();
+          console.log(data);
+
+          if (data.checkoutUrl) {
+            window.location.href = data.checkoutUrl;
+          } else {
+            throw new Error("Checkout URL missing");
+          }
+        } catch (err) {
+          console.error(err);
+
+          alert("Failed to start payment. Please try again.");
+
+          payBtn.disabled = false;
+          payBtn.textContent = "Pay";
+          loader.style.display = "none";
+        }
+      });
+    </script>
+    <script src="/socket.io/socket.io.js"></script>
+  </body>
+</html>

@@ -99,13 +99,19 @@ const verifyWebhook = (provider, req) => {
 exports.handleStripeWebhook = async (req, res) => {
   console.log("Webhook received");
 
-  let event;
+  const provider = "stripe";
+  let event = null;
 
   try {
-    event = verifyWebhook("stripe", req);
+    event = verifyWebhook(provider, req);
   } catch (err) {
     console.error("Signature failed:", err.message);
-    return res.status(401).send("Invalid signature");
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  if (!event || !event.id) {
+    console.error("Invalid webhook event:", event);
+    return res.status(400).send("Invalid webhook payload");
   }
 
   const eventId = event.id;
@@ -120,6 +126,8 @@ exports.handleStripeWebhook = async (req, res) => {
       return res.status(200).send("Ignored");
     }
 
+    const session = event.data.object;
+
     // -----------------------------
     // DATABASE TRANSACTION ONLY
     // -----------------------------
@@ -133,7 +141,7 @@ exports.handleStripeWebhook = async (req, res) => {
       await tx.webhookEvent.create({
         data: {
           id: eventId,
-          provider: "stripe"
+          provider: "Stripe"
         }
       });
 
@@ -149,7 +157,7 @@ exports.handleStripeWebhook = async (req, res) => {
     // -----------------------------
     // BUSINESS LOGIC AFTER COMMIT
     // -----------------------------
-    await handleSuccess(event.data.object);
+    await handleSuccess(session);
 
     console.log(`Stripe webhook processed: ${event.id}`);
 
@@ -173,14 +181,13 @@ async function handleSuccess(session) {
   const bookingId = session.metadata.bookingId;
 
   console.log(`Processing payment: ${reference}`);
-  console.log("metadata:", { reference, bookingId });
   console.log("Stripe amount:", session.amount_total);
 
   if (session.payment_status !== "paid") {
     throw new Error("Session not paid");
   }
 
-  let payment;
+  let payment = null;
 
   // -----------------------------
   // DB TRANSACTION + VERIFICATION
@@ -199,8 +206,8 @@ async function handleSuccess(session) {
       return;
     }
 
-    // 💡 Amount check HERE
-    const stripeAmount = session.amount_total;
+    // Amount check here
+    const stripeAmount = session.amount_total / 100;
 
     if (payment.amount !== stripeAmount) {
       throw new Error(
@@ -224,10 +231,9 @@ async function handleSuccess(session) {
   // -----------------------------
   try {
     await axios.post(
-      `${process.env.BOOKING_URL}/api/bookings/internal/confirm`,
+      `${process.env.BOOKING_URL}/api/bookings/confirm`,
       {
-        bookingId,
-        paymentRef: reference
+        bookingId
       },
       {
         timeout: 5000,

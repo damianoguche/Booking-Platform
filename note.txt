@@ -459,3 +459,51 @@ Which Service Should Create It?
 | Booking | Reserve property       |
 | Payment | Handle Stripe/Paystack |
 | Webhook | Confirm payment        |
+
+How Stripe Checkout Works
+The code below does not automatically show a payment form. It just 
+creates a checkout session on Stripe’s servers and gives you a URL.
+
+  - const session = await stripe.checkout.sessions.create({...});
+
+Stripe Checkout is a hosted payment page, so your flow is:
+
+- Your backend creates the session.
+- Stripe returns a session.url.
+- You redirect your user’s browser to that URL.
+- User sees the Stripe card payment interface (UI).
+- After payment, Stripe redirects to your success_url or cancel_url.
+- Stripe calls your webhook (checkout.session.completed) automatically.
+
+What “Atomic” Should Mean:
+Atomic = “All succeed or all fail together.”
+Only database state changes should be atomic.
+In booking confirmation, the only thing that must be atomic is:
+
+✔ Updating booking/payment state in the database.
+
+Why Notifications Must NOT Be Atomic:
+If you do this inside a DB transaction:
+
+  - await tx.booking.update(...)
+  - await notificationService.sendNotification(...)
+
+You create a dangerous situation:
+
+Scenario:
+ - DB update succeeds
+ - SMS/Email provider is down
+ - Notification fails
+ - Transaction rolls back
+
+Result:
+ - Booking becomes UNCONFIRMED
+ - Payment already taken
+ - Customer charged but no booking
+
+This is a financial disaster.
+
+External services must never be inside DB transactions.
+This includes:
+Email, SMS, Push, Webhooks, Metrics, Analytics, Slack alerts,
+Webhooks.

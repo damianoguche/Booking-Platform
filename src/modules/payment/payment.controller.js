@@ -1,6 +1,14 @@
 const { log } = require("../../utils/audit");
 const metrics = require("../admin/admin.metrics");
 const service = require("./payment.service");
+const Stripe = require("stripe");
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: "2026-01-28.clover",
+  maxNetworkRetries: 3,
+  timeout: 20000
+});
+const prisma = require("../../config/db");
 
 exports.initStripePayment = async (req, res, next) => {
   const { bookingId, amount, email } = req.body;
@@ -16,12 +24,28 @@ exports.initStripePayment = async (req, res, next) => {
       return res.status(404).json({ message: "Booking not found" });
     }
 
+    // if (booking.userId !== req.user?.id) {
+    //   return res.status(403).json({ message: "Unauthorized" });
+    // }
+
     if (booking.status !== "PENDING") {
       return res.status(409).json({ message: "Invalid booking state" });
     }
 
+    // Prevent duplicate payment
+    const existing = await prisma.payment.findUnique({
+      where: { bookingId }
+    });
+
+    if (existing && existing.status === "SUCCESS") {
+      return res.status(400).json({
+        message: "Booking already paid"
+      });
+    }
+
     // Generate ref
     const reference = `BK_${Date.now()}_${Math.random()}`;
+    const provider = "Stripe";
 
     // Create local payment record
     const payment = await service.processPayment(
@@ -34,6 +58,7 @@ exports.initStripePayment = async (req, res, next) => {
     await metrics.pushMetrics(req.app.get("io"));
 
     // Create Stripe Checkout Session
+    // Verify payment later in payment.webhook.js
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
@@ -47,7 +72,7 @@ exports.initStripePayment = async (req, res, next) => {
               name: booking.property.name,
               description: booking.property.description
             },
-            unit_amount: booking.property.basePrice * 100
+            unit_amount: amount * 100
           },
           quantity: 1
         }
@@ -58,8 +83,11 @@ exports.initStripePayment = async (req, res, next) => {
         paymentRef: payment.reference
       },
 
-      success_url: `${process.env.FRONTEND_URL}/success?ref=${reference}`,
-      cancel_url: `${process.env.FRONTEND_URL}/cancel`
+      success_url: "http://localhost:3000/success.html",
+      cancel_url: "http://localhost:3000/cancel.html"
+
+      // success_url: `${process.env.FRONTEND_URL}/success?ref=${reference}`,
+      // cancel_url: `${process.env.FRONTEND_URL}/cancel`
     });
 
     // Save Stripe session ID
@@ -71,14 +99,14 @@ exports.initStripePayment = async (req, res, next) => {
     });
 
     // Audit log
-    log(req.user.id, "MAKE_PAYMENT", "Payment", {
+    log(req.user?.id || "SYSTEM", "MAKE_PAYMENT", "Payment", {
       bookingId,
       amount,
       paymentId: payment.id,
       status: payment.status
     });
 
-    // Return Checkout URL
+    // Send the URL to the frontend
     res.json({
       checkoutUrl: session.url,
       sessionId: session.id

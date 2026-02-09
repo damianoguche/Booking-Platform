@@ -9,6 +9,7 @@ const propertyRoutes = require("./modules/property/property.routes");
 const adminRoutes = require("./modules/admin/admin.routes");
 const notificationRoutes = require("./modules/notification/notification.routes");
 const webhook = require("./modules/payment/payment.webhook");
+const path = require("path");
 
 const app = express();
 
@@ -21,6 +22,9 @@ app.post(
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve static files (HTML, CSS, JS) from 'public'
+app.use(express.static(path.join(__dirname, "..", "public")));
 
 app.use("/api/properties", propertyRoutes);
 app.use("/api/bookings", bookingRoutes);

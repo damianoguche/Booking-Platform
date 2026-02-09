@@ -4,7 +4,7 @@ const prisma = require("./src/config/db");
 async function main() {
   console.log("Seeding test data...");
 
-  // USER (Host & Guest can be same for testing)
+  // USER
   const user = await prisma.user.upsert({
     where: { email: "testuser@example.com" },
     update: {},
@@ -56,22 +56,22 @@ async function main() {
   console.log("Booking:", booking.id);
 
   // PAYMENT
-  const payment = await prisma.payment.upsert({
-    where: { reference: "PAY12345" },
-    update: {
-      amount: 3000
-    },
-    create: {
-      reference: "PAY12345",
-      bookingId: booking.id,
-      amount: 3000,
-      status: "PENDING",
-      currency: "USD",
-      provider: "Stripe"
-    }
-  });
+  // const payment = await prisma.payment.upsert({
+  //   where: { reference: "PAY12345" },
+  //   update: {
+  //     amount: 3000
+  //   },
+  //   create: {
+  //     reference: "PAY12345",
+  //     bookingId: booking.id,
+  //     amount: 3000,
+  //     status: "PENDING",
+  //     currency: "usd",
+  //     provider: "Stripe"
+  //   }
+  // });
 
-  console.log("Payment:", payment.reference);
+  // console.log("Payment:", payment.reference);
 }
 
 main()

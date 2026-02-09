@@ -1,0 +1,117 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: "Poppins", sans-serif;
+}
+
+body {
+  font-family: sans-serif;
+  background-color: #f5f5f5;
+  text-align: center;
+  padding: 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  color: #fff;
+}
+
+.btn {
+  box-sizing: border-box;
+  min-width: 96px;
+  background-color: #9c489e;
+  color: #ffff;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 16px;
+}
+
+button {
+  border: none;
+  outline: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+button:focus,
+button:active {
+  outline: none;
+  box-shadow: none;
+}
+
+.container {
+  background: #9c489e;
+  padding: 50px 40px;
+  border-radius: 20px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  max-width: 500px;
+  width: 100%;
+  animation: fadeIn 1s ease-out;
+}
+
+.cancel-btn {
+  display: inline-block;
+  margin-top: 30px;
+  padding: 12px 30px;
+  background: #d46aff; /* lighter purple */
+  color: #fff;
+  font-weight: bold;
+  text-decoration: none;
+  border-radius: 50px;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(156, 72, 158, 0.4);
+}
+
+.cancel-btn:hover {
+  transform: scale(1.05);
+  background: #b63dc9;
+}
+
+/* Button aligned with color palette */
+.success-btn {
+  display: inline-block;
+  margin-top: 30px;
+  padding: 12px 30px;
+  background: #d46aff; /* lighter purple */
+  color: #fff;
+  font-weight: bold;
+  text-decoration: none;
+  border-radius: 50px;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(156, 72, 158, 0.4);
+}
+
+.success-btn:hover {
+  transform: scale(1.05);
+  background: #b63dc9;
+}
+
+/* Pay button */
+.pay-btn {
+  padding: 14px 24px;
+  border-radius: 50px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(135deg, #d46aff, #b63dc9);
+  color: #fff;
+  transition: all 0.3s ease;
+  box-shadow: 0 6px 18px rgba(156, 72, 158, 0.5);
+}
+
+.pay-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 10px 25px rgba(156, 72, 158, 0.7);
+}
+
+.pay-btn:active {
+  transform: scale(0.97);
+}
+
+.pay-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
