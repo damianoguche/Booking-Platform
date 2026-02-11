@@ -8,9 +8,8 @@ const PORT = process.env.PORT || 3000;
 
 /**
  * Attaches Socket.IO to the HTTP server
- * Enables:
- *  - WebSocket connections
- *  - Real-time, bi-directional communication
+ * Enables: - WebSocket connections and real-time, bi-directional
+ * communication
  */
 const io = new Server(server, {
   cors: { origin: "*" }

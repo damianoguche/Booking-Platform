@@ -91,7 +91,7 @@ button:active {
 
 /* Pay button */
 .pay-btn {
-  padding: 14px 24px;
+  padding: 14px 40px;
   border-radius: 50px;
   font-size: 1.1rem;
   font-weight: 600;

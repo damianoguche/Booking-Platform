@@ -26,6 +26,14 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static files (HTML, CSS, JS) from 'public'
 app.use(express.static(path.join(__dirname, "..", "public")));
 
+app.get("/pay", (req, res) => {
+  res.sendFile(path.join(__dirname, "..", "public/payment.html"));
+});
+
+app.get("/admin", (req, res) => {
+  res.sendFile(path.join(__dirname, "..", "public/index.html"));
+});
+
 app.use("/api/properties", propertyRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/availability", availabilityRoutes);

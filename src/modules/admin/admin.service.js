@@ -66,17 +66,6 @@ exports.recentActivity = async () => {
   return { users, bookings, payments };
 };
 
-// Suspend a user (guest or host)
-// exports.suspendUser = async (userId) => {
-//   const user = await prisma.user.findUnique({ where: { id: userId } });
-//   if (!user) throw new Error("User not found");
-
-//   return prisma.user.update({
-//     where: { id: userId },
-//     data: { role: "suspended" } // soft-block the account
-//   });
-// };
-
 exports.suspendUser = async (userId) => {
   return prisma.$transaction(async (tx) => {
     // Suspend user (soft block)
@@ -98,17 +87,6 @@ exports.suspendUser = async (userId) => {
     return suspendedUser;
   });
 };
-
-// Force-cancel a booking
-// exports.cancelBooking = async (bookingId) => {
-//   const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
-//   if (!booking) throw new Error("Booking not found");
-
-//   return prisma.booking.update({
-//     where: { id: bookingId },
-//     data: { status: "CANCELLED" }
-//   });
-// };
 
 exports.cancelBooking = async (bookingId) => {
   // Atomically update booking

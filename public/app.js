@@ -1,9 +1,8 @@
-const socket = io(); // Connect to server
+const socket = io();
 
-document.getElementById("socketBtn").addEventListener("click", () => {
-  socket.emit("test_event", { message: "Hello from client!" });
-});
+socket.on("connect", () => {
+  console.log("Connected to socket:", socket.id);
 
-socket.on("test_event_response", (data) => {
-  alert(`Server says: ${data.message}`);
+  // Tell server this is admin
+  socket.emit("admin:join");
 });

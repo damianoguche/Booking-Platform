@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Booking Admin Dashboard</title>
+
+    <!-- Charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Socket.IO (CDN + Local Fallback) -->
+    <script
+      src="https://cdn.socket.io/4.7.2/socket.io.min.js"
+      integrity="sha384-wb9WfP0iAfDdc0AGJi/7luWGINuD/7++UZ5EONosFVJeFt3PcTJS3BM4tiTqcKoy"
+      crossorigin="anonymous"
+    ></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <link rel="stylesheet" href="admin.css" />
+  </head>
+
+  <body>
+    <header>
+      <h1>Booking Admin</h1>
+      <div id="uptime">Uptime: --</div>
+    </header>
+
+    <div class="container">
+      <!-- KPIs -->
+      <section class="kpis" id="kpis"></section>
+
+      <!-- Charts -->
+      <div class="panel">
+        <h2>Platform Growth</h2>
+        <canvas id="growthChart"></canvas>
+      </div>
+
+      <div class="grid">
+        <!-- LEFT -->
+        <div>
+          <!-- Revenue -->
+          <div class="panel">
+            <h2>Revenue Trend</h2>
+            <canvas id="revenueChart"></canvas>
+          </div>
+
+          <!-- Fraud Detection -->
+          <div class="panel">
+            <h2>Fraud Detection Panel</h2>
+            <table id="fraudTable"></table>
+          </div>
+
+          <!-- Audit Logs -->
+          <div class="panel">
+            <h2>Audit Trail</h2>
+            <table id="auditTable"></table>
+          </div>
+        </div>
+
+        <!-- RIGHT -->
+        <div>
+          <!-- Admin Actions -->
+          <div class="panel actions">
+            <h2>Admin Controls</h2>
+
+            <div>
+              <input id="userId" value="USR102" />
+              <button onclick="suspendUser()">Suspend</button>
+            </div>
+
+            <div>
+              <input id="bookingId" value="BK991" />
+              <button onclick="cancelBooking()">Cancel</button>
+            </div>
+
+            <div>
+              <input id="paymentId" value="PAY221" />
+              <button onclick="flagFraud()">Flag</button>
+            </div>
+
+            <div>
+              <input id="propertyId" value="PROP77" />
+              <button onclick="suspendProperty()">Block</button>
+            </div>
+          </div>
+
+          <!-- System -->
+          <div class="panel">
+            <h2>System Health</h2>
+            <p>API: <span id="api"></span></p>
+            <p>Payments: <span id="pay"></span></p>
+            <p>Webhooks: <span id="webhook"></span></p>
+            <p>Uptime: <span id="sys"></span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>Booking Platform Admin © 2026</footer>
+
+    <script>
+      /******************************
+       * SOCKET INITIALIZATION (SAFE)
+       ******************************/
+
+      let socket = null;
+
+      if (typeof window.io === "function") {
+        try {
+          socket = io();
+          console.info("Socket.IO connected");
+        } catch (err) {
+          console.warn("Socket.IO initialization failed:", err);
+        }
+      } else {
+        console.warn("Socket.IO not loaded. Running in offline/demo mode.");
+      }
+
+      /******************************
+       * DUMMY DASHBOARD DATA
+       ******************************/
+
+      const demo = {
+        kpis: {
+          guests: 340,
+          hosts: 87,
+          properties: 129,
+          bookings: 911,
+          confirmed: 742,
+          revenue: 4200000
+        },
+
+        growth: {
+          labels: ["Aug", "Sep", "Oct", "Nov", "Dec", "Jan"],
+          users: [120, 160, 210, 260, 300, 340],
+          bookings: [300, 380, 420, 550, 720, 910]
+        },
+
+        revenue: {
+          labels: ["Aug", "Sep", "Oct", "Nov", "Dec", "Jan"],
+          data: [400000, 620000, 780000, 920000, 1100000, 1200000]
+        },
+
+        fraud: [
+          {
+            id: "PAY221",
+            user: "James",
+            amount: 120000,
+            reason: "Multiple retries"
+          },
+          { id: "PAY199", user: "Ada", amount: 98000, reason: "IP mismatch" },
+          {
+            id: "PAY176",
+            user: "John",
+            amount: 150000,
+            reason: "Velocity abuse"
+          }
+        ],
+
+        audit: [
+          { time: "10:21", admin: "SYS", action: "Auto-cancel expired" },
+          { time: "10:18", admin: "Admin1", action: "Suspended user USR102" },
+          { time: "10:11", admin: "Admin2", action: "Adjusted payment PAY180" },
+          { time: "09:55", admin: "SYS", action: "Webhook retry" }
+        ],
+
+        health: { api: true, payments: true, webhooks: true, uptime: "3d 12h" }
+      };
+
+      render(demo);
+
+      /******************************
+       * RENDER
+       ******************************/
+
+      function render(d) {
+        renderKpis(d.kpis);
+        renderGrowth(d.growth);
+        renderRevenue(d.revenue);
+        renderFraud(d.fraud);
+        renderAudit(d.audit);
+        renderHealth(d.health);
+      }
+
+      function renderKpis(k) {
+        kpis.innerHTML = `
+   ${card("Guests", k.guests)}
+   ${card("Hosts", k.hosts)}
+   ${card("Properties", k.properties)}
+   ${card("Bookings", k.bookings)}
+   ${card("Revenue", "₦" + k.revenue.toLocaleString())}
+  `;
+      }
+
+      function card(t, v) {
+        return `<div class='kpi'><h3>${t}</h3><p>${v}</p></div>`;
+      }
+
+      /******************************
+       * CHARTS
+       ******************************/
+
+      function renderGrowth(g) {
+        new Chart(growthChart, {
+          type: "line",
+          data: {
+            labels: g.labels,
+            datasets: [
+              {
+                label: "Users",
+                data: g.users,
+                borderColor: "#f472ff",
+                tension: 0.4
+              },
+              {
+                label: "Bookings",
+                data: g.bookings,
+                borderColor: "#9c489e",
+                tension: 0.4
+              }
+            ]
+          }
+        });
+      }
+
+      function renderRevenue(r) {
+        new Chart(revenueChart, {
+          type: "bar",
+          data: {
+            labels: r.labels,
+            datasets: [
+              {
+                label: "Revenue (₦)",
+                data: r.data,
+                backgroundColor: "rgba(156,72,158,.6)"
+              }
+            ]
+          }
+        });
+      }
+
+      /******************************
+       * FRAUD
+       ******************************/
+
+      function renderFraud(list) {
+        fraudTable.innerHTML = `
+    <tr><th>Payment</th><th>User</th><th>Amount</th><th>Reason</th><th>Status</th></tr>
+    ${list
+      .map(
+        (f) => `
+      <tr>
+        <td>${f.id}</td>
+        <td>${f.user}</td>
+        <td>₦${f.amount}</td>
+        <td>${f.reason}</td>
+        <td><span class='status FRAUD'>FLAGGED</span></td>
+      </tr>`
+      )
+      .join("")}
+  `;
+      }
+
+      /******************************
+       * AUDIT
+       ******************************/
+
+      function renderAudit(list) {
+        auditTable.innerHTML = `
+    <tr><th>Time</th><th>Admin</th><th>Action</th></tr>
+    ${list
+      .map(
+        (a) => `
+      <tr>
+        <td>${a.time}</td>
+        <td>${a.admin}</td>
+        <td>${a.action}</td>
+      </tr>`
+      )
+      .join("")}
+  `;
+      }
+
+      /******************************
+       * HEALTH
+       ******************************/
+
+      function renderHealth(h) {
+        set("api", h.api);
+        set("pay", h.payments);
+        set("webhook", h.webhooks);
+        sys.textContent = h.uptime;
+        uptime.textContent = "Uptime: " + h.uptime;
+      }
+
+      function set(id, v) {
+        const el = document.getElementById(id);
+        el.textContent = v ? "Online" : "Offline";
+        el.style.color = v ? "#4ade80" : "#f87171";
+      }
+
+      /******************************
+       * ADMIN ACTIONS (DEMO)
+       ******************************/
+
+      function suspendUser() {
+        alert("User suspended: " + userId.value);
+      }
+
+      function cancelBooking() {
+        alert("Booking cancelled: " + bookingId.value);
+      }
+
+      function flagFraud() {
+        alert("Payment flagged: " + paymentId.value);
+      }
+
+      function suspendProperty() {
+        alert("Property blocked: " + propertyId.value);
+      }
+
+      /******************************
+       * BASIC FRONTEND TESTS
+       ******************************/
+
+      function runTests() {
+        console.group("Dashboard Self Tests");
+
+        console.assert(typeof render === "function", "render() should exist");
+        console.assert(kpis.children.length > 0, "KPI cards should render");
+        console.assert(
+          fraudTable.rows.length > 1,
+          "Fraud table should have rows"
+        );
+        console.assert(
+          auditTable.rows.length > 1,
+          "Audit table should have rows"
+        );
+        console.assert(
+          typeof suspendUser === "function",
+          "Admin actions loaded"
+        );
+
+        if (socket === null) {
+          console.info("Socket test: Running in demo/offline mode (OK)");
+        } else {
+          console.assert(
+            socket.connected !== undefined,
+            "Socket should be valid"
+          );
+        }
+
+        console.groupEnd();
+      }
+
+      window.addEventListener("load", runTests);
+    </script>
+  </body>
+</html>

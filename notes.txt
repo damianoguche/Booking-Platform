@@ -1,0 +1,58 @@
+Industry-Standard Dashboard
+1. No Persistent Navigation
+Real dashboards almost always have:
+Sidebar navigation (left)
+Or top + side navigation
+
+Yours has no navigation, so it doesn’t scale when you add:
+
+Users
+Payments
+Properties
+Reports
+Settings
+Logs
+
+2. Too Many Vertical Sections
+You stacked:
+Payment stats
+Booking stats
+User stats
+Vertically.
+
+This causes excessive scrolling on real systems.
+
+Industry dashboards usually:
+👉 Put KPIs in ONE unified row.
+
+3. No Page Hierarchy
+Everything has equal importance visually.
+In pro dashboards:
+
+- KPIs first
+- Charts second
+- Tables third
+- System/Admin tools last
+
+Your layout mixes these.
+
+4. No Workspace Feel
+Modern admin panels feel like:
+ - "This is a control center"
+
+Yours feels more like:
+ - "A styled report page"
+
+It should be "control center"
+
+What Industry Standard Looks Like (2026)
+Most modern dashboards follow:
+
+┌──────── Sidebar ────────┐ ┌──────── Main ──────────────┐
+│ Dashboard               │ │ Header / Profile           │
+│ Users                   │ │ KPIs                       │
+│ Bookings                │ │ Charts                     │
+│ Payments                │ │ Tables                     │
+│ Reports                 │ │ System Status              │
+│ Settings                │ │                            │
+└─────────────────────────┘ └────────────────────────────┘

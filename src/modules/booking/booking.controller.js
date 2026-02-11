@@ -133,13 +133,19 @@ exports.confirm = async (req, res) => {
   try {
     // Security
     if (req.headers["x-internal-key"] !== process.env.INTERNAL_KEY) {
-      return res.status(401).json({ message: "Unauthorized" });
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized"
+      });
     }
 
     const { bookingId } = req.body;
 
     if (!bookingId) {
-      return res.status(400).json({ message: "Missing data" });
+      return res.status(400).json({
+        success: false,
+        message: "Missing data"
+      });
     }
 
     // ----------------------------
@@ -173,8 +179,6 @@ exports.confirm = async (req, res) => {
       booking
     });
   } catch (err) {
-    console.error("Confirm booking error:", err.message);
-
     if (err.message === "Booking not found") {
       return res.status(404).json({ message: err.message });
     }

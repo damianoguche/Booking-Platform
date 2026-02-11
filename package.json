@@ -4,7 +4,7 @@
   "description": "Bookings, Payments, Availability & Guest Experience API",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon src/server.js",
+    "dev": "nodemon src/admin.js",
     "start": "node src/server.js",
      "stripe:listen": "stripe listen --forward-to localhost:3000/api/payments/webhooks/stripe",
     "prisma:generate": "prisma generate",
